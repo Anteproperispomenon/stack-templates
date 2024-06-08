@@ -1,0 +1,1127 @@
+{-# START_FILE .gitattributes #-}
+# Auto detect text files and perform LF normalization
+* text=auto
+
+{-# START_FILE .gitignore #-}
+dist
+dist-*
+cabal-dev
+*.o
+*.hi
+*.hie
+*.chi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+.hpc
+.hsenv
+.cabal-sandbox/
+cabal.sandbox.config
+*.prof
+*.aux
+*.hp
+*.eventlog
+.stack-work/
+cabal.project.local
+cabal.project.local~
+.HTF/
+.ghc.environment.*
+
+{-# START_FILE CHANGELOG.md #-}
+# Changelog for `{{name}}`
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to the
+[Haskell Package Versioning Policy](https://pvp.haskell.org/).
+
+## Unreleased
+
+## 0.1.0.0 - YYYY-MM-DD
+
+{-# START_FILE LICENSE #-}
+Copyright {{author-name}}{{^author-name}}Author name here{{/author-name}} (c) {{year}}{{^year}}2024{{/year}}
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1.  Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+
+2.  Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+3.  Neither the name of the copyright holder nor the names of its contributors
+    may be used to endorse or promote products derived from this software
+    without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+{-# START_FILE README.md #-}
+# {{name}}
+
+**{{name}}** is an orthography converter for (insert language here). It was
+created with [metamorTHysis](https://github.com/Anteproperispomenon/metamorTHysis)
+by using the default [metamorTHysis template](https://github.com/Anteproperispomenon/metamorTHysis-template).
+
+## Note for Template Users
+
+If you want to use this template to make your own orthography converter,
+the best way is to run the following command in your terminal/shell of
+choice:
+
+```
+stack new my-converter Anteproperispomenon/metamorTHysis-template-beta
+```
+
+...where `my-converter` is the name you want to use for your orthography
+converter.
+
+{-# START_FILE Setup.hs #-}
+import Distribution.Simple
+main = defaultMain
+
+{-# START_FILE app\Main.hs #-}
+module Main (main) where
+
+import Metamorth.CLI.TH
+import Orthographies
+
+-- All you need to do in this file
+-- is import both "Metamorth.CLI.TH"
+-- and "Orthographies", and then write
+-- createMain. This will automatically
+-- generate the program you want from
+-- the details specified in "src/Orthographies.hs".
+createMain
+
+{-# START_FILE orth\orth1.thyo #-}
+# This is an output specification file. It is very Similarl
+# to a parser specification file, but with some significant
+# differences. For more info on the differences, see the 
+# documentation in the main metamorTHysis repository.
+
+
+name : orth1
+
+default case : /at
+
+====
+
+state lastVow : lastA lastE lastI lastO lastU lastSchwa lastAw lastOo
+
+state seenGlottal
+
+====
+
+# Follow patterns. See metamorTHysis docs for more info.
+a >nasal : ã !lastVow=lastA
+a : a !lastVow=lastA
+e : e !lastVow=lastE
+o >nasal : õ !lastVow=lastO
+o : o !lastVow=lastO
+u : u !lastVow=lastU
+aw : ɒ !lastVow=lastAw
+oo : ʊ !lastVow=lastOo
+schwa : ə !lastVow=lastSchwa
+
+i : + I !lastVow=lastI
+i : - ɪ !lastVow=lastI
+
+# Note that state-checks now come BEFORE the colon,
+# instead of after.
+l @lastVow=lastU  : U+026B
+l @lastVow=lastAw : U+026B
+l : l
+
+(t unasp) : t
+(t asp)   : t '
+
+(ts unasp) : t s
+(ts asp)   : t U+0315 s
+
+(p asp  ) : p *apost
+(p unasp) : p
+b : b
+m : m
+v : v 
+f : f
+
+d : d
+n : n
+r : r
+# Showing some examples of changing output
+# depending on state.
+th @lastVow=lastAw : ϑ
+th @lastVow=lastOo : ϑ
+th @lastVow=off : þ
+th : θ
+dh : ð
+
+(k asp)   : k U+0313
+(k unasp) : k
+g : g
+ng : ŋ
+h : h
+glot : ʔ !seenGlottal=on
+
+{-# START_FILE orth\orth1.thyp #-}
+# This is a "parser" specification file. It's where you specify
+# how plain text is parsed into a list of phonemes. If you don't
+# know what that means, go look at "phonemes.thym" first.
+# These phonemes can then be converted back to plain text, either
+# as the same orthography, or a different one. For information
+# about that, look at "orth1.thyo" and "orth2.thyo".
+
+# To start with, you can specify a name for your orthography,
+# by writing something like...
+
+orthography : orth1
+
+# Along with a name to specify the language/phoneme set you
+# are using.
+
+phoneme set : my_phonemes
+
+# At the moment, these two values are optional and unused, but they
+# may be used in the future to check that the orthography name
+# specified here matches with the name specified for this
+# orthography elsewhere.
+
+# Now, to show that the "header" section is finished, we write the
+# usual section splitter, four or more equal signs in a row.
+
+====
+
+# Now, we're into the class and state declaration section. 
+
+# (Note: you may want to read the section on patterns first before
+#  you read this section. This section comes first simply because
+#  that's how the sections are ordered in the specification files)
+
+# A class is simply a way to treat multiple characters as "Basically
+# the same". 
+# Let's say your orthography has three different kinds of apostrophes,
+# and which one is used depends on the context. However, people often
+# use the wrong kind of apostrophe when typing in this orthography.
+# Therefore, you want to match phonemes that use apostrophes with ANY
+# kind of apostrophe, and not just the "correct" one. If you had to
+# write an extra pattern for each kind of apostrophe, that would be 
+# a pain. Instead, you can declare a class, like so:
+
+class apost : ' ` U+0313 U+0315
+
+# A class declaration consists of the keyword "class", followed by a
+# name, followed by a colon, and finally followed by a space-separated
+# list of characters. For example here, we have the two common ASCII
+# apostrophes, along with two Unicode apostrophes. If you don't 
+# understand/recognise the "U+00..." notation, don't worry; we'll get
+# into it later. 
+
+# One thing to be careful about with classes: try to avoid putting the
+# same character into more than one class. If you don't intend to use
+# the two possible classes in the same situation, it shouldn't be a problem,
+# but it can be a problem otherwise.
+
+# States, on the other hand, allow you to store information about what
+# you've parsed in the word so far to use later. Let's say that the
+# value of a certain consonant depends on the value of the last vowel. 
+# We can then declare a (value) state like so:
+
+state lastVow : lastA lastE lastI lastO lastU lastSchwa lastAw lastOo
+
+# Then, when we write our patterns later on, we can then use a
+# state-set command like so:
+
+# a : a !lastVow=lastA
+# e : e !lastVow=lastE
+# i : i !lastVow=lastI
+# o : o !lastVow=lastO
+# u : u !lastVow=lastU
+# aw : ɒ !lastVow=lastAw
+# oo : ʊ !lastVow=lastOo
+# schwa : U+0259 !lastVow=lastSchwa
+
+# The basic format of a state-set command is "!stateName=stateVal".
+# Now, when we approach the consonant in question, we can
+# use a state-check command like this:
+
+# l : @lastVow=lastU  ɫ # or U+026B
+# l : @lastVow=lastAw ɫ # or U+026B
+# l : l
+
+# Notice that we don't specify a pattern for every possible value of
+# "lastVow". This is because the "default" pattern, "l : l" will be used
+# if none of the other patterns can be satisfied. Note that the parser
+# will always try patterns with MORE state-checks first before checking
+# ones with fewer, so this "fall-through" behaviour works. You can even
+# check multiple states in the same pattern, so long as you don't check
+# the same state twice (which would either be redundant or mean the pattern
+# would never be successful).
+
+# Like traits, states are divided into boolean states and value-states.
+# Like boolean traits, boolean states are defined by declaring a state without
+# a value-list. e.g.
+
+state seenGlottal
+
+# With boolean states, you can check/set whether they're enabled or disabled by
+# using one of the following possible (case-insensitive) strings:
+
+# On  : yes, true, y, t, on
+# Off : No, false, n, f, off
+
+# Boolean traits always start in the "off" position. If you want a
+# boolean state that starts in the "on" position, you can instead 
+# just invert the meaning of the state, and invert all checks/sets.
+# e.g.
+
+# Finally, value-states can also make use of these on/off values, since
+# value-states start off without any value. You can use both on and off
+# values with check-state operations, with "on" meaning "anything but
+# off" and "off" meaning "none of the defined values". You can even
+# set a value-state to "Off", i.e. changing it to having no value.
+# However, you can't set a value-state to "On", since there's no
+# value specified for it to hold.
+
+# Note: At the moment, there's no way to specify a "default value" for
+# a value-state to take at the beginning of parsing a word. However,
+# you can just replace the "default" state you wanted with off, and
+# just replaces checks for the former "default" state with checks
+# for "off".
+
+
+# Now that we're done with the section on classes and states, we can
+# move onto the most important section(s): the pattern section(s).
+# Note that if you don't plan to use classes or states, you can just
+# leave this section blank, but you still need to remember the extra
+# separator.
+
+# (Again, the 4+ equal sign section separator)
+
+====
+
+# The most important part of your phoneme file is the section(s) for
+# patterns. Technically, this can be one or two sections: the first
+# section, for single-phoneme patterns, and the second section, for
+# multi-phoneme patterns. You can actually specify single-phoneme
+# patterns in the multi-phoneme section, so you may want to just
+# skip the single-phoneme section and use that instead. Note that
+# even in the single-phoneme section, you can match multiple characters
+# to the same phoneme, you can just only match one phoneme at a time.
+
+# But before that, what is a pattern? A pattern is just a phoneme
+# (or list of phonemes) matched to a (space-separated) sequence of 
+# characters. You write one like so:
+
+schwa : ə !lastVow=lastSchwa
+
+# In this case, this means that phoneme named "schwa" (names are the
+# ones you specified in the ".thym" file) is matched by the character
+# "ə". You also could have matched this by writing "U+0259" instead of
+# "ə"; i.e.
+
+# schwa : U+0259 !lastVow=lastSchwa
+
+# This "U+0..." form is a standard way of referring to a character by
+# its Unicode codepoint. A unicode codepoint is just a standardised index
+# from numbers to characters. In this case, the character "ə" has index
+# "U+0259". The "0259" here is actually just a number in hexadecimal. If
+# you don't know hexadecimal, that's okay; if you know the character you
+# want, you just need to lookup its codepoint. If it's in this "U+..."
+# format, it should be correct.
+
+# You may be wondering why you would use this format instead of using the
+# character itself. Firstly, using the character itself may not be as well
+# supported on some systems as using the "U+..." format. Fortunately, this
+# shouldn't be as much of an issue as it used to be, but it might cause
+# problems in some edge cases.
+
+# The second, and usually more pertinent reason, is that some characters
+# don't work as you might expect. "Modifier" characters often only work
+# when placed directly next to the character to be modified, which doesn't
+# work great since the characters in a pattern are supposed to be space-separated.
+# Also, if you're working with a right-to-left script, such as Arabic, using
+# the characters directly may not result in the order that you expect. In
+# both of these cases, it's best to just use the codepoint format.
+
+# Note that when matching characters that have aspects, you have to specify
+# ALL the aspects that a character has on the left side of the colon. The
+# aspects are matched in the same order as they were specified in the 
+# phoneme specification. So, for example
+
+t unasp : t
+t asp   : t *apost # more info on this later.
+
+# would match all the possible cases for 't'.  Note that this only works
+# like this in the single-phoneme section; in the multi-phoneme section,
+# you have to surround each phoneme+aspects in parentheses to get it to
+# work. e.g.
+
+# (t unasp) : t
+# (t asp)   : t *apost
+
+# Another important thing to note is that matching against a character 
+# automatically generates code for working with both the upper-case and
+# lower-case versions of a character. If, for whatever reason, you want
+# to work with them separately, you can add a "+"/"-" at the start of the
+# right-hand side of the pattern to specify an upper-case only/lower-case
+# only pattern respectively. This is necessary when your orthography doesn't
+# follow the standard upper-case/lower-case rules. e.g.
+
+i : + I !lastVow=lastI
+i : - ɪ !lastVow=lastI
+i : - i !lastVow=lastI
+
+a : a !lastVow=lastA
+a : ã !lastVow=lastA
+e : e !lastVow=lastE
+e : 
+o : o !lastVow=lastO
+o : õ !lastVow=lastO
+u : u !lastVow=lastU
+aw : ɒ !lastVow=lastAw
+oo : ʊ !lastVow=lastOo
+
+# Notice that you can specify multiple patterns for the same phoneme. This
+# is because people typing in your orthography may not type the correct 
+# character. Thus, you can automatically correct common mistakes where it's
+# unambiguous what the user meant to type. Ambiguous errors, however, are 
+# much more difficult to correct.
+
+# As you may have noticed, not all characters are interpreted as the character
+# itself. "U", "+", and "-" all mean something other than themself. In these
+# cases, you can just insert a backslash "\" before the character to mean the
+# character itself. And, if you want a backslash by itself, just type two 
+# backslashes in a row, i.e. "\\".
+
+# However, these aren't the only special characters that are accepted. Here's
+# a list of special characters that must be "escaped" with a backslash, and
+# what they mean when used on their own.
+
+# + : This is an upper-case pattern
+# - : This is a  lower-case pattern
+# * : Signifies the start of a class usage.
+# ^ : Signifies that this pattern can only come at the beginning of a word.
+# $ : Signifies that this pattern can only come at the end of a word.
+# % : Signifies that this pattern CAN NOT come at the beginning of a word.
+# & : Signifies that this pattern CAN NOT come at the end of a word.
+# @ : Checks the value of a state.
+# ! : Sets the value of a state.
+# # : Signifies the start of a comment.
+
+# For more info on "!" and "@", see the section on states.
+
+# Using '*' is pretty easy; if you've read all through this,
+# you'll have seen it before. You just write an apostrophe
+# followed by the name of a class, and then the pattern will
+# match any character from the class in that position. e.g.
+
+ts asp : t *apost s
+ts asp : t s *apost
+
+# would match any apostrophe in the class "apost" in that
+# position in the pattern. e.g.
+
+# t U+0313 s
+# t s '
+# t s `
+# t ` s
+# t s U+0315
+
+# would all be matched by those two patterns above. As you
+# can see, classes are one of the most important tools for
+# matching phonemes that have multiple possible realisations.
+
+# However, you have to be careful when writing your classes.
+# If the same character occurs in two separate classes, e.g.
+
+# class apost : ' ` U+0313 U+0315
+# class grave : ` U+0300 U+02CB
+
+# And then you have patterns like:
+
+# ts asp : t *apost s
+# th     : t *grave
+
+# Then the parser might run into trouble. To avoid this,
+# you can "split up" the classes like so:
+
+# class apost : ' U+0313 U+0315
+# class grave : U+300 U+02CB
+# class apostOrGrave : `
+
+# And then you can split up your patterns like so:
+
+# ts asp : t *apost s
+# ts asp : t *apostOrGrave s
+# th : t *grave
+# th : t *apostOrGrave
+
+# This way, the parser won't run into the problems with overlapping
+# classes. However, it can be more difficult if you have more complicated
+# overlaps.
+
+# Again, it shouldn't be a problem to use overlapping classes if you don't
+# use them in patterns that overlap, but you may want to try avoiding
+# them to be safe.
+
+# Next, we have the start/end markers, ^/% and $/&. These ensure certain
+# patterns only match if they fall in specific positions. The most commonly
+# used of these is probably "^". This can be useful when the beginning of a
+# word has an implicit phoneme that isn't represented by the orthography.
+# For example, let's say words that start with a vowel actually have an
+# implicit glottal stop before them. In that case, you can go to the
+# multi-phoneme section of the file, and write something like this:
+
+# glot a : ^ a
+# glot e : ^ e
+# glot i : ^ i
+# glot o : ^ o
+# glot u : ^ u
+# glot aw : ^ ɒ # or U+0252
+# glot oo : ^ ʊ # or U+028A
+# glot schwa : ^ ə
+
+# This would make the parser "insert" a glottal stop before a vowel at the
+# start of a word. Similarly, you can also "insert" phonemes at the end
+# of a word with the same trick:
+
+# a h : a $
+# e h : e $
+# etc...
+
+# On the other hand, "%" and "&" are less useful, since they only prevent
+# a pattern from being matched if it's at the start or end of a word
+# respectively. For example, doing something like this:
+
+# glot a : ^ a
+# a : % a
+
+# would be redundant, since the parser would always choose the first parser
+# when parsing the start of a word, and thus would be equivalent to just
+# writing:
+
+# glot a : ^ a
+# a : a
+
+# However, there may be situations where it's more convenient to express
+# a set of patterns using "%" or "&".
+
+# Now, the rest of the phonemes: 
+
+p asp   : p *apost
+p unasp : p
+b : b
+m : m
+v : v 
+f : f
+
+# "ts asp" has already been covered.
+ts unasp : t s
+d : d
+n : n
+r : r
+th : t h
+th : þ
+th : θ
+th : ϑ
+dh : d h
+dh : ð
+
+k asp   : k '
+k unasp : k
+g : g
+ng : n g
+ng : ŋ
+h : h
+glot : ɂ
+glot : ʔ
+
+
+
+{-# START_FILE orth\orth2.thyo #-}
+
+# Warning: This example orthography is not yet complete.
+
+name : orth2
+
+default case : /at
+
+====
+
+====
+
+a : a
+e : e
+i : i
+o : o
+u : u
+
+
+{-# START_FILE orth\orth2.thyp #-}
+
+# Warning: This example orthography is not yet complete.
+
+orthography : orth1
+
+phoneme set : my_phonemes
+
+====
+
+====
+
+a : a
+e : e
+i : i
+o : o
+u : u
+
+
+{-# START_FILE orth\phonemes.thym #-}
+# This is where you specify the "phonemes" for your language.
+# Phonemes (are supposed to) represent the sounds your language
+# uses to indicate meaning. Essentially, this is a list of
+# names (sometimes together with properties) that can then each
+# be interpreted as a phoneme in the language.
+
+# For example: let's say one orthography uses "th" to represent
+# the sound made by the "th" in the English word "thing". Another
+# orthography might use the letter "Þ/þ" while another might use
+# "Θ/θ". We would then add a phoneme named "th" to our list here
+# to represent that sound. 
+
+# However, sometimes languages need "extra letters" that may have
+# seemingly redundant pronunciations. For example, in the Breton
+# language's Perunvan orthography, the letter "zh" is pronounced the
+# same as "z" in most dialects, but is pronounced the same as "h"
+# in the Gwenedeg dialect. Thus, it would require a separate "zh"
+# phoneme, despite the sounds it makes already being covered by "z"
+# and "h".
+
+
+# However, before we get to that, we first specify the possible
+# properties of our phonemes. Properties are divided into two
+# kinds: aspects and traits. 
+
+# Aspects are used to "subdivide" a phoneme into multiple values.
+# For instance, a phoneme could be either aspirated or unaspirated.
+# To indicate this, we would add a line such as the following:
+
+aspect aspiration : asp unasp
+
+# This would mean we could add the "aspiration" aspect to a phoneme,
+# and then every time we used that phoneme, we would have to specify
+# whether it is aspirated or unaspirated. You can have any (positive)
+# number of options for an aspect, though it doesn't make sense to use
+# fewer than two.
+
+# If you're only using at most one or two aspect(s) for only a few
+# phonemes, you might just be better off creating additional phonemes
+# for those cases; there aren't many benefits to using aspects in that
+# case. However, if you have a lot of aspects on a single phoneme, it
+# might make things easier for you.
+
+
+# The second kind of property, "traits", are simply used to provide more
+# information about an individual phoneme. Unlike aspects, the value of
+# a trait is always the same for the same phoneme. These can be used if
+# your language has rules that divide phonemes into sets*, and the value
+# of a phoneme can depend on which set the previous or next phoneme falls
+# into.
+
+# * You can also use groups to divide your phonemes into sets, which is
+# more efficient but less versatile.
+
+# There are two kinds of traits: boolean traits and value-traits. Boolean
+# traits can only either be True or False; they're useful when defining
+# whether a phoneme belongs to a certain set or not. You can define one
+# by just writing "trait <trait-name>". e.g.
+
+trait nasal
+
+# Value-traits are more complex; they have a list of values into which a
+# phoneme with that trait can fall. You define them like you would an aspect,
+# but with "trait" instead of "aspect". e.g.
+
+trait position : front, centre, back
+
+# At the moment, traits are only used by the output function to find out
+# more about the next phoneme in the list, but they may be used more in
+# the future.
+
+
+# Next, we move on to defining the actual phonemes. However, to indicate
+# that we are moving on to the next section, we add 4 (or more) equal signs
+# in a row at the start of a line.
+
+====
+
+# Now, we need to talk about groups. Groups are another way to divide your
+# phonemes into sets, but they only work hierarchically.
+
+# Basically, you can either avoid groups altogether (in which case you
+# just list out all your phonemes one by one), or you can create a tree
+# that specifies which group each phoneme belongs to. 
+
+# Probably the most common way to use groups is to divide your phonemes
+# into vowels and consonants.
+
+# To start a group, you start a that starts with an asterisk (*), followed
+# by the name of the group. e.g. 
+
+* vowel
+
+# You can then list out all the phonemes in this group, like so:
+a : position=front # see below for what this means
+e : position=front
+i : position=front
+o : position=back
+u : position=back
+schwa : position=centre
+aw : position=back
+oo : position=back
+
+# You can then start the next group by again writing an asterisk 
+# followed by the name of the group. You can even have sub-groups.
+# To specify a sub-group, you start a line with two asterisks, 
+# followed by the name of the sub-group. Be careful, though; you
+# can't mix phonemes and sub-groups in the same group. So something like
+#
+# * consonant
+# k
+# g
+# h
+# ** fronted
+# t
+# d
+# ...
+#
+# Would be wrong. You can, however, have arbitrarily many levels of
+# nested sub-groups, which you can specify by just starting a line
+# with the appropriate number of asterisks, followed by the name of
+# the sub(-sub)*-group.
+
+* consonant
+
+# To specify that an aspect or boolean trait applies to a phoneme,
+# you write a colon after the phoneme, followed by a(n optionally comma-separated)
+# list of the traits and aspects that apply. For value-traits, you have
+# to write the name followed by an equal sign, followed by the value name.
+# e.g. (position=front) (as seen above).
+
+** labial
+p : aspiration
+b
+m : nasal
+v
+f
+
+** alveolar
+t  : aspiration
+ts : aspiration
+d
+n : nasal
+r
+l
+th
+dh
+
+** other
+k : aspiration
+g
+ng : nasal
+h
+glot # glottal stop
+
+# When writing your output specification, you can depend on the traits 
+# and groups of the following phoneme. For example, you could change
+# how a vowel is shown depending on whether the following consonant
+# is alveolar or not.
+
+# And that's it for declaring your phoneme set! Note that if need be, you
+# can add new traits (and groups) later on without having to change any of
+# your existing parser/output specifications. Unfortunately, the same is not
+# true of aspects, since they change how you specify phonemes in the other
+# files. 
+
+{-# START_FILE package.yaml #-}
+name:                {{name}}
+version:             0.1.0.0
+github:              {{github-username}}{{^github-username}}githubuser{{/github-username}}/{{name}}
+license:             BSD-3-Clause
+author:              {{author-name}}{{^author-name}}Author name here{{/author-name}}
+maintainer:          {{author-email}}{{^author-email}}example@example.com{{/author-email}}
+copyright:           {{copyright}}{{^copyright}}{{year}}{{^year}}2023{{/year}} {{author-name}}{{^author-name}}Author name here{{/author-name}}{{/copyright}}
+homepage:            https://github.com/{{github-username}}{{^github-username}}githubuser{{/github-username}}/{{name}}#readme
+
+extra-source-files:
+- README.md
+- CHANGELOG.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/{{github-username}}{{^github-username}}githubuser{{/github-username}}/{{name}}#readme>
+
+default-extensions:
+- DataKinds
+- DeriveLift
+- FlexibleContexts
+- FlexibleInstances
+- ImportQualifiedPost
+- LambdaCase
+- MultiWayIf
+- OverloadedStrings
+- ScopedTypeVariables
+- TupleSections
+- TypeApplications
+
+dependencies:
+- base >= 4.7 && < 5
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wmissing-export-lists
+- -Wmissing-home-modules
+- -Wpartial-fields
+- -Wredundant-constraints
+
+library:
+  source-dirs: src
+  dependencies:
+  - metamorTHysis
+
+executables:
+  {{name}}-cli:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - {{name}}
+    - metamorTHysis-cli
+  
+  {{name}}-server:
+    main:                Main.hs
+    source-dirs:         server
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - {{name}}
+    - metamorTHysis-server
+    # For interactive html servers.
+    - metamorTHysis-server-js
+    - metamorTHysis-server-html
+
+  
+tests:
+  {{name}}-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - {{name}}
+
+{-# START_FILE server\Main.hs #-}
+module Main (main) where
+
+import Server
+
+import Metamorth.Server.CLI
+
+-- This function auto-generates the code for
+-- the CLI server. However, you do need to provide
+-- two (quotation-mark-enclosed) strings: The name
+-- of the program, and the name of the language.
+-- Unfortunately, because of the way the data is
+-- stored, there's not really an easy way to get
+-- the language name automatically.
+makeCLI "{{name}}" "<Insert Language Name Here>"
+
+
+
+{-# START_FILE server\Server.hs #-}
+module Server
+  ( ConvertMessage(..)
+  , QueryMessage(..)
+  , processInput
+  , serveQueries
+  , runServer
+  ) where
+
+import Orthographies
+import Metamorth.Server.Types.Embedded
+
+import Metamorth.Server.Processing
+import Metamorth.Server.API
+
+import Metamorth.Server.JS
+import Metamorth.Server.HTML
+
+-- Again, these functions auto-generate most of the
+-- necessary code by themselves. If you get a compile
+-- error saying something about "inputOrthNameMap" or
+-- "outputOrthNameMap" not being defined/found, make
+-- sure they're in the export list in "Orthographies.hs".
+--
+-- These types are then used by "makeCLI" in server/Main.hs.
+makeJSONTypes inputOrthNameMap outputOrthNameMap
+
+makeProcessFunc
+makeServantTypes
+
+-- Now, these functions generate JavaScript and HTML
+-- that can be reached from something like
+-- "localhost:8081/interactive/convert.html".
+generateJS @ConvertAPI
+makeMainHTML inputOrthNameMap outputOrthNameMap
+
+
+{-# START_FILE src\Orthographies.hs #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE QuasiQuotes #-}
+
+{-|
+Module      : Orthographies
+Description : Main code for {{name}}
+Copyright   : (c) {{author}}, {{year}}
+License     : BSD-3
+
+All of the functions and types in this module
+are automatically generated from other files.
+
+-}
+
+module Orthographies
+  -- * The Internal Type
+  ( Phoneme(..)
+  -- * The conversion functions
+  , convertOrthography
+  , convertOrthographyLazy
+  , convertOrthographyBS
+  -- * The types that select an orthography
+  , InOrth(..)
+  , OutOrth(..)
+  -- * Details about the orthographies
+  , inputOrthNameMap
+  , outputOrthNameMap
+  , languageDetails
+  ) where
+
+import Metamorth.Interaction.Quasi (metamorth)
+
+-- This is where you declare most of the information
+-- about your language and its orthographies. Note that
+-- it has to start with "[metamorth|" and end with "|]".
+[metamorth|
+
+-- The name of the language you're working with.
+-- This will be used when you're running the program.
+-- Note that this value is optional.
+language : MyLanguage 
+
+-- The filepath of the phoneme data. To find out more
+-- about how to write them, look in the example file.
+phonemes : orth/phonemes.thym
+
+-- Now, declaring an orthography. You must start by
+-- giving a name for the orthography. This is the name
+-- the program will use to refer to it as. 
+Orth1
+
+-- You then continue by listing all the details about
+-- this orthography by starting a line indented at least
+-- one space, of the form "option : value". Note that all
+-- lines about the orthography must be indented the same
+-- amount, except for empty lines and lines that only
+-- contain comments.
+
+  -- This is the path of the input specification. If the file path
+  -- has spaces in it, you'll have to enclose it in
+  -- (double) quotation marks. Otherwise, you can leave the
+  -- the quotation marks off.
+  input : "orth/orth1.thyp"
+
+  -- Same for the output specification. Note that not all orthographies
+  -- need to have both an input spec and an output spec, but
+  -- you'll need at least one orthography with an input spec
+  -- and one orthography with an output spec. Otherwise, there'd
+  -- be no covertible option.
+  output : "orth/orth1.thyo"
+
+  -- This is a simple description of the orthography. Note that
+  -- it must all be on one line here, but if you use the string
+  -- "\n" at any point in the description, it will be converted
+  -- to a linebreak in the program.
+  description : "This is a very simple orthography.\nIt is primarily used in _____"
+  
+  -- This is the default extension value used by the program when
+  -- converting files. If the user specifies an input file but no
+  -- output file, this value will be inserted between the filename
+  -- and its extension. 
+  -- Note that even if you don't include a dot here, one will 
+  -- automatically be added anyway.
+  extension : ".or1"
+
+  -- Next, the values the user can type in the CLI to get this orthography.
+  -- Usually, this will include the name of the orthography itself,
+  -- along with other, shorter ways to refer to the orthography.
+  -- Be careful: Make sure this doesn't overlap with any other
+  -- options for other orthographies; if they do, you won't be able
+  -- to predict which orthography it will refer to.
+  -- Note that all the names here are case-insensitive, so both you
+  -- and the user are free to use any mixture of cases.
+  cli-names : "orth1", "o1", "ort1", "orthography1", "orth-1", "orthography-1"
+
+-- The next three options change how the code is created. Most of these
+-- are on by default, since they can reduce the amount of code generated,
+-- but sometimes they can cause issues (especially unify-branches). To turn
+-- them on/off, you can use a variety of options. "Yes", "True", "t", "y", and
+-- "on" all enable the options, while "FALSE", "no", "off", and "f" all disable
+-- the options. Since all three options are on by default, you'll usually only
+-- be using the "off" options. Again, the options are case-insensitive.
+  unify-branches : off
+  group-guards : ON
+  check-states : Yes
+
+-- Finally, we have some more internal options. These can be useful when
+-- debugging, since you'll have a better idea of what went wrong with your
+-- code.
+
+  -- First, we have the suffix. This program generates a lot of internal
+  -- functions for each orthography, and the suffix provides a way for the
+  -- compiler to tell functions from each orthography apart. You don't technically
+  -- have to specify this, as the compiler will just generate a generic "_prs001"
+  -- suffix for each orthography, but it can be more useful for debugging to 
+  -- give the compiler a specific suffix for each orthography. That way, you
+  -- can tell which orthography is giving you problems. 
+  -- Usually, you start the suffix off with an underscore.
+  suffix : "_ort1"
+
+  -- Next, we have the names of the the parser function and the output function.
+  -- You can specify these directly if you want to make these functions available
+  -- to export, but usually you just wouldn't specify these options.
+  parser-name : orthParser1
+  output-name : orthOutput1
+
+-- And that's it (for the first orthography). You can then
+-- specify the next orthography by writing an unindented name.
+
+Orth2
+  input  : "orth/orth2.thyp"
+  output : "orth/orth2.thyo"
+  description : "Another simple orthography."
+  extension : ".or2"
+  cli-names : "or2", "o2", "ort2", "orthography2", "orth-2", "orthography-2"
+  suffix : "_ort2"
+  parser-name : orthParser2
+  output-name : orthOutput2
+
+-- And finally, the closing bracket.
+
+|]
+
+{-# START_FILE stack.yaml #-}
+# This file was automatically generated by 'stack init'
+#
+# Some commonly used options have been documented as comments in this file.
+# For advanced use and comprehensive documentation of the format, please see:
+# https://docs.haskellstack.org/en/stable/yaml_configuration/
+
+# Resolver to choose a 'specific' stackage snapshot or a compiler version.
+# A snapshot resolver dictates the compiler version and the set of packages
+# to be used for project dependencies. For example:
+#
+# resolver: lts-3.5
+# resolver: nightly-2015-09-21
+# resolver: ghc-7.10.2
+#
+# The location of a snapshot can be provided as a file or url. Stack assumes
+# a snapshot provided as a file might change, whereas a url resource does not.
+#
+# resolver: ./custom-snapshot.yaml
+# resolver: https://example.com/snapshots/2018-01-01.yaml
+resolver:
+  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/11.yaml
+
+# User packages to be built.
+# Various formats can be used as shown in the example below.
+#
+# packages:
+# - some-directory
+# - https://example.com/foo/bar/baz-0.0.2.tar.gz
+#   subdirs:
+#   - auto-update
+#   - wai
+packages:
+- .
+# Dependency packages to be pulled from upstream that are not in the resolver.
+# These entries can reference officially published versions as well as
+# forks / in-progress versions pinned to a git hash. For example:
+#
+# extra-deps:
+# - acme-missiles-0.3
+# - git: https://github.com/commercialhaskell/stack.git
+#   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
+#
+extra-deps: 
+  - git : https://github.com/Anteproperispomenon/metamorTHysis
+  - git : https://github.com/Anteproperispomenon/metamorTHysis-cli
+  - git : https://github.com/Anteproperispomenon/metamorTHysis-server
+  - git : https://github.com/Anteproperispomenon/metamorTHysis-server-js
+  - git : https://github.com/Anteproperispomenon/metamorTHysis-server-html
+
+# Override default flag values for local packages and extra-deps
+# flags: {}
+
+# Extra package databases containing global packages
+# extra-package-dbs: []
+
+# Control whether we use the GHC we find on the path
+# system-ghc: true
+#
+# Require a specific version of stack, using version ranges
+# require-stack-version: -any # Default
+# require-stack-version: ">=2.7"
+#
+# Override the architecture used by stack, especially useful on Windows
+# arch: i386
+# arch: x86_64
+#
+# Extra directories used by stack for building
+# extra-include-dirs: [/path/to/dir]
+# extra-lib-dirs: [/path/to/dir]
+#
+# Allow a newer minor version of GHC than the snapshot specifies
+# compiler-check: newer-minor
+
+{-# START_FILE test\Spec.hs #-}
+main :: IO ()
+main = putStrLn "Test suite not yet implemented"
