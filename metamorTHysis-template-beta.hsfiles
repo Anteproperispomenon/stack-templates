@@ -93,6 +93,8 @@ import Distribution.Simple
 main = defaultMain
 
 {-# START_FILE app\Main.hs #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 module Main (main) where
 
 import Metamorth.CLI.TH
@@ -122,6 +124,8 @@ default case : /at
 state lastVow : lastA lastE lastI lastO lastU lastSchwa lastAw lastOo
 
 state seenGlottal
+
+import trait nasal
 
 ====
 
@@ -574,7 +578,7 @@ u : u
 
 # Warning: This example orthography is not yet complete.
 
-orthography : orth1
+orthography : orth2
 
 phoneme set : my_phonemes
 
@@ -788,6 +792,7 @@ default-extensions:
 - LambdaCase
 - MultiWayIf
 - OverloadedStrings
+- PatternSynonyms
 - ScopedTypeVariables
 - TupleSections
 - TypeApplications
@@ -850,6 +855,8 @@ tests:
     - {{name}}
 
 {-# START_FILE server\Main.hs #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 module Main (main) where
 
 import Server
@@ -868,6 +875,8 @@ makeCLI "{{name}}" "<Insert Language Name Here>"
 
 
 {-# START_FILE server\Server.hs #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 module Server
   ( ConvertMessage(..)
   , QueryMessage(..)
@@ -1092,11 +1101,20 @@ packages:
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
 extra-deps: 
-  - git : https://github.com/Anteproperispomenon/metamorTHysis
-  - git : https://github.com/Anteproperispomenon/metamorTHysis-cli
-  - git : https://github.com/Anteproperispomenon/metamorTHysis-server
-  - git : https://github.com/Anteproperispomenon/metamorTHysis-server-js
-  - git : https://github.com/Anteproperispomenon/metamorTHysis-server-html
+  # Note: These are pinned to certain commits since Stack requires it.
+  # In the future, they will be pinned to more stable commits or branches.
+  - git: https://github.com/Anteproperispomenon/metamorTHysis.git
+    commit: e5f80cebae6e9ae1413e83320c0c30c51f85915b
+  - git: https://github.com/Anteproperispomenon/metamorTHysis-cli.git
+    commit: 0e66d6125b53e85f9c4784439b1a181d68f874da
+  - git: https://github.com/Anteproperispomenon/metamorTHysis-server.git
+    commit: 0890ff4f1e7f8b34a93fadf627e4ae02b673e980
+  - git: https://github.com/Anteproperispomenon/metamorTHysis-server-js.git
+    commit: 7b68cff1754529127858ae066873dcc2df1e65a3
+  - git: https://github.com/Anteproperispomenon/metamorTHysis-server-html.git
+    commit: a1f02056ee609d98c9dc9f0cb185c7d2cc70b979
+  - file-io-0.1.1
+  - servant-js-0.9.4.2
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
